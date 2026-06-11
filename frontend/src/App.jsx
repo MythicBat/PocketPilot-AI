@@ -14,6 +14,7 @@ import {
   Route,
   CheckCircle2,
   Loader2,
+  Download,
 } from "lucide-react";
 import "./App.css";
 
@@ -252,9 +253,15 @@ export default function App() {
 
   const openSavedMission = (saved) => {
     setMission({
+      misson_id: saved.id,
       mode: saved.mode,
       final_answer: saved.final_answer,
     });
+  };
+
+  const exportMission = () => {
+    if (!mission?.misson_id) return;
+    window.open(`${API_URL}/missions/${mission.misson_id}/export`, "_blank");
   };
 
   return (
@@ -402,6 +409,12 @@ export default function App() {
 
             <div className="final-card">
               <h2>Mission Plan</h2>
+              {mission.mission_id && (
+                <button className="export-button" onClick={exportMission}>
+                  <Download size={16} />
+                  Export PDF
+                </button>
+              )}
               <pre>{mission.final_answer}</pre>
             </div>
 

@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 
@@ -7,6 +8,7 @@ from app.agents.orchestrator import run_mission
 from app.database import init_db, SessionLocal, Mission, Memory, KnowledgeItem
 from app.agents.knowledge_vault import save_knowledge
 from app.utils.file_parser import parse_uploaded_file
+from app.utils.pdf_exporter import create_mission_pdf
 from app.services.embedding_service import create_embedding
 
 app = FastAPI(
@@ -78,6 +80,30 @@ def get_missions():
         }
         for mission in missions
     ]
+
+@app.get("/missions/{mission_id}/export")
+def export_mission_pdf(mission_id: int):
+    db = SessionLocal()
+    mission = db.query(Mission).filter(Mission.id == mission_id).first()
+    db.close()
+
+    if not mission:
+        return {"error": "Mission not found"}
+
+    pdf_buffer = create_mission_pdf(
+        goal=mission.goal,
+        final_answer=mission.final_answer
+    )
+
+    filename = f"pocketpilot_mission_{mission_id}.pdf"
+
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}"
+        }
+    )
 
 @app.get("/memories")
 def get_memories():
