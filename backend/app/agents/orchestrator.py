@@ -5,6 +5,7 @@ from app.agents.planner_agent import planner_agent
 from app.agents.knowledge_agent import knowledge_agent
 from app.agents.emergency_agent import emergency_agent
 from app.agents.memory_agent import memory_agent
+from app.agents.profile_context import get_profile_context
 from app.services.ollama_service import run_ollama
 
 
@@ -30,9 +31,13 @@ def run_mission(user_goal: str) -> dict:
     knowledge = knowledge_agent(user_goal)
     emergency = emergency_agent(user_goal)
     memory = memory_agent(user_goal)
+    profile_context = get_profile_context()
 
     prompt = f"""
 You are PocketPilot AI, a production-grade edge personal assistant.
+
+Use the user's saved profile when relevant.
+{profile_context}
 
 User goal:
 {user_goal}

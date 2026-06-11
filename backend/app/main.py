@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from contextlib import asynccontextmanager
 
 from app.agents.orchestrator import run_mission
-from app.database import init_db, SessionLocal, Mission, Memory, KnowledgeItem
+from app.database import init_db, SessionLocal, Mission, Memory, KnowledgeItem, UserProfile
 from app.agents.knowledge_vault import save_knowledge
 from app.utils.file_parser import parse_uploaded_file
 from app.utils.pdf_exporter import create_mission_pdf
@@ -222,4 +222,70 @@ def reindex_knowledge():
     return {
         "message": "Knowledge reindexed",
         "items_updated": len(items)
+    }
+
+class UserProfileRequest(BaseModel):
+    name: str = ""
+    budget_style: str = ""
+    transport_preference: str = ""
+    food_preference: str = ""
+    planning_style: str = ""
+    location: str = ""
+
+@app.get("/profile")
+def get_profile():
+    db = SessionLocal()
+    profile = db.query(UserProfile).first()
+
+    if not profile:
+        profile = UserProfile()
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+    
+    db.close()
+
+    return {
+        "id": profile.id,
+        "name": profile.name,
+        "budget_style": profile.budget_style,
+        "transport_preference": profile.transport_preference,
+        "food_preference": profile.food_preference,
+        "planning_style": profile.planning_style,
+        "location": profile.location,
+        "updated_at": profile.updated_at
+    }
+
+@app.post("/profile")
+def update_profile(request: UserProfileRequest):
+    db = SessionLocal()
+    profile = db.query(UserProfile).first()
+
+    if not profile:
+        profile = UserProfile()
+        db.add(profile)
+
+    profile.name = request.name
+    profile.budget_style = request.budget_style
+    profile.transport_preference = request.transport_preference
+    profile.food_preference = request.food_preference
+    profile.planning_style = request.planning_style
+    profile.location = request.location
+
+    db.commit()
+    db.refresh(profile)
+    db.close()
+
+    return {
+        "message": "Profile Updated",
+        "profile": {
+            "id": profile.id,
+            "name": profile.name,
+            "budget_style": profile.budget_style,
+            "transport_preference": profile.transport_preference,
+            "food_preference": profile.food_preference,
+            "planning_style": profile.planning_style,
+            "location": profile.location,
+            "updated_at": profile.updated_at
+        }
     }

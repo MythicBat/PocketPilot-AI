@@ -46,3 +46,15 @@ class KnowledgeItem(Base):
     embedding = Column(Text, nullable=True)
     
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class UserProfile(Base):
+    __tablename__ = "user_profile"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, default="")
+    budget_style = Column(String, default="")
+    transport_preference = Column(String, default="")
+    food_preference = Column(String, default="")
+    planning_style = Column(String, default="")
+    location = Column(String, default="")
+    updated_at = Column(DateTime, default=datetime.utcnow)

@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   Loader2,
   Download,
+  User,
 } from "lucide-react";
 import "./App.css";
 
@@ -67,6 +68,39 @@ export default function App() {
   const [memories, setMemories] = useState([]);
   const [newMemory, setNewMemory] = useState("");
   const [knowledge, setKnowledge] = useState([]);
+  const [profile, setProfile] = useState({
+    name: "",
+    budget_style: "",
+    transport_preference: "",
+    food_preference: "",
+    planning_style: "",
+    location: "",
+  });
+
+  const loadProfile = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/profile`);
+      setProfile(response.data);
+    } catch (error) {
+      console.error("Could not load profile", error);
+    }
+  };
+
+  const saveProfile = async () => {
+    try {
+      await axios.post(`${API_URL}/profile`, profile);
+      loadProfile();
+    } catch (error) {
+      console.error("Could not save profile", error);
+    }
+  };
+
+  const updateProfileField = (field, value) => {
+    setProfile((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
   const baseWorkflow = [
     {
@@ -184,6 +218,8 @@ export default function App() {
 
     const initialize = async () => {
       try {
+        await loadProfile();
+
         // load knowledge first
         await loadKnowledge();
 
@@ -266,6 +302,58 @@ export default function App() {
 
   return (
     <main className="layout">
+      <div className="profile-panel">
+        <div className="sidebar-title">
+          <User size={18} />
+          <h2>User Profile</h2>
+        </div>
+
+        <input
+          className="profile-input"
+          value={profile.name}
+          onChange={(e) => updateProfileField("name", e.target.value)}
+          placeholder="Name"
+        />
+
+        <input
+          className="profile-input"
+          value={profile.location}
+          onChange={(e) => updateProfileField("location", e.target.value)}
+          placeholder="Location"
+        />
+
+        <input
+          className="profile-input"
+          value={profile.budget_style}
+          onChange={(e) => updateProfileField("budget_style", e.target.value)}
+          placeholder="Budget Style"
+        />
+
+        <input
+          className="profile-input"
+          value={profile.transport_preference}
+          onChange={(e) => updateProfileField("transport_preference", e.target.value)}
+          placeholder="Transport Preference"
+        />
+
+        <input
+          className="profile-input"
+          value={profile.food_preference}
+          onChange={(e) => updateProfileField("food_preference", e.target.value)}
+          placeholder="Food Preference"
+        />
+
+        <input
+          className="profile-input"
+          value={profile.planning_style}
+          onChange={(e) => updateProfileField("planning_style", e.target.value)}
+          placeholder="Planning style"
+        />
+
+        <button className="memory-button" onClick={saveProfile}>
+          Save Profile
+        </button>
+      </div>
       <aside className="sidebar">
         <div className="memory-panel">
           <div className="sidebar-title">
