@@ -1,10 +1,11 @@
 from openai import OpenAI
 
-from app.config import QWEN_API_KEY, QWEN_BASE_URL, QWEN_MODEL
+from app.config import QWEN_API_KEY, QWEN_BASE_URL, QWEN_MODEL, ENABLE_OLLAMA_FALLBACK
 from app.agents.planner_agent import planner_agent
 from app.agents.knowledge_agent import knowledge_agent
 from app.agents.emergency_agent import emergency_agent
 from app.agents.memory_agent import memory_agent
+from app.services.ollama_service import run_ollama
 
 
 def offline_fallback(user_goal: str) -> dict:
@@ -25,18 +26,10 @@ I created a basic offline plan using local agents. Add your Qwen API key later t
 
 
 def run_mission(user_goal: str) -> dict:
-    if not QWEN_API_KEY:
-        return offline_fallback(user_goal)
-
     planner = planner_agent(user_goal)
     knowledge = knowledge_agent(user_goal)
     emergency = emergency_agent(user_goal)
     memory = memory_agent(user_goal)
-
-    client = OpenAI(
-        api_key=QWEN_API_KEY,
-        base_url=QWEN_BASE_URL,
-    )
 
     prompt = f"""
 You are PocketPilot AI, a production-grade edge personal assistant.
@@ -62,20 +55,63 @@ Create a polished mission plan with:
 5. Final checklist
 """
 
-    response = client.chat.completions.create(
-        model=QWEN_MODEL,
-        messages=[
-            {"role": "system", "content": "You are a helpful multi-agent AI assistant."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.5,
+    if not QWEN_API_KEY:
+        if ENABLE_OLLAMA_FALLBACK:
+            try:
+                local_answer = run_ollama(prompt)
+
+                return {
+                    "mode": "ollama_offline",
+                    "planner": planner,
+                    "knowledge": knowledge,
+                    "emergency": emergency,
+                    "memory": memory,
+                    "final_answer": local_answer
+                }
+            except Exception:
+                return offline_fallback(user_goal)
+
+        return offline_fallback(user_goal)
+
+    client = OpenAI(
+        api_key=QWEN_API_KEY,
+        base_url=QWEN_BASE_URL,
     )
 
-    return {
-        "mode": "qwen_cloud",
-        "planner": planner,
-        "knowledge": knowledge,
-        "emergency": emergency,
-        "memory": memory,
-        "final_answer": response.choices[0].message.content
-    }
+    try:
+        response = client.chat.completions.create(
+            model=QWEN_MODEL,
+            messages=[
+                {"role": "system", "content": "You are a helpful multi-agent AI assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.5,
+        )
+
+        return {
+            "mode": "qwen_cloud",
+            "planner": planner,
+            "knowledge": knowledge,
+            "emergency": emergency,
+            "memory": memory,
+            "final_answer": response.choices[0].message.content
+        }
+
+    except Exception:
+        if ENABLE_OLLAMA_FALLBACK:
+            try:
+                local_answer = run_ollama(prompt)
+
+                return {
+                    "mode": "ollama_offline",
+                    "planner": planner,
+                    "knowledge": knowledge,
+                    "emergency": emergency,
+                    "memory": memory,
+                    "final_answer": local_answer
+                }
+
+            except Exception:
+                return offline_fallback(user_goal)
+
+        return offline_fallback(user_goal)

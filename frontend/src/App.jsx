@@ -399,6 +399,8 @@ export default function App() {
                   Mode:{" "}
                   {mission.mode === "qwen_cloud"
                     ? "Qwen Cloud"
+                    : mission.mode === "ollama_offline"
+                    ? "Local Ollama"
                     : "Offline / Fallback"}
                 </h2>
                 <p>
