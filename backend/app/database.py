@@ -42,4 +42,7 @@ class KnowledgeItem(Base):
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     source = Column(String, default="manual")
+
+    embedding = Column(Text, nullable=True)
+    
     created_at = Column(DateTime, default=datetime.utcnow)

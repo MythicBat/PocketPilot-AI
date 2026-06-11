@@ -7,6 +7,7 @@ from app.agents.orchestrator import run_mission
 from app.database import init_db, SessionLocal, Mission, Memory, KnowledgeItem
 from app.agents.knowledge_vault import save_knowledge
 from app.utils.file_parser import parse_uploaded_file
+from app.services.embedding_service import create_embedding
 
 app = FastAPI(
     title="PocketPilot AI",
@@ -176,4 +177,23 @@ async def upload_knowledge(file: UploadFile = File(...)):
         "content": item.content[:500],
         "source": item.source,
         "created_at": item.created_at
+    }
+
+@app.post("/knowledge/reindex")
+def reindex_knowledge():
+    db = SessionLocal()
+
+    items = db.query(KnowledgeItem).all()
+
+    for item in items:
+        item.embedding = json.dumps(
+            create_embedding(item.content)
+        )
+
+    db.commit()
+    db.close()
+
+    return {
+        "message": "Knowledge reindexed",
+        "items_updated": len(items)
     }
