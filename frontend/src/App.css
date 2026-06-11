@@ -306,3 +306,82 @@ button:disabled {
     letter-spacing: -2px;
   }
 }
+
+.workflow-card {
+  max-width: 820px;
+  margin: 24px auto 0;
+  padding: 20px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.workflow-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.workflow-title h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.workflow-list {
+  display: grid;
+  gap: 12px;
+}
+
+.workflow-step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.06);
+  opacity: 0.55;
+  transition: all 0.25s ease;
+}
+
+.workflow-step.running {
+  opacity: 1;
+  background: rgba(124, 60, 255, 0.22);
+  transform: scale(1.01);
+}
+
+.workflow-step.done {
+  opacity: 1;
+  background: rgba(0, 209, 255, 0.14);
+}
+
+.workflow-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.workflow-step strong {
+  display: block;
+  font-size: 15px;
+}
+
+.workflow-step span {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: #b8bddc;
+}
+
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

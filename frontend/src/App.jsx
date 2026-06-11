@@ -11,6 +11,9 @@ import {
   History,
   PlusCircle,
   Upload,
+  Route,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import "./App.css";
 
@@ -28,6 +31,33 @@ function AgentCard({ icon, title, content }) {
   );
 }
 
+function WorkflowStep({ icon, title, status }) {
+  return (
+    <div className={`workflow-step ${status}`}>
+      <div className="workflow-icon">
+        {status === "running" ? (
+          <Loader2 className="spin" size={20} />
+        ) : status === "done" ? (
+          <CheckCircle2 size={20} />
+        ) : (
+          icon
+        )}
+      </div>
+
+      <div>
+        <strong>{title}</strong>
+        <span>
+          {status === "done"
+            ? "Completed"
+            : status === "running"
+            ? "Running..."
+            : "Waiting"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [goal, setGoal] = useState("");
   const [mission, setMission] = useState(null);
@@ -36,6 +66,54 @@ export default function App() {
   const [memories, setMemories] = useState([]);
   const [newMemory, setNewMemory] = useState("");
   const [knowledge, setKnowledge] = useState([]);
+
+  const baseWorkflow = [
+    {
+      "id": "planner",
+      "title": "Planner Agent",
+      icon: <CalendarCheck size={20} />
+    },
+
+    {
+      "id": "knowledge",
+      "title": "Knowledge Agent",
+      icon: <Brain size={20} />
+    },
+
+    {
+      "id": "memory",
+      "title": "Memory Agent",
+      icon: <Database size={20} />
+    },
+
+    {
+      "id": "emergency",
+      "title": "Emergency Agent",
+      icon: <ShieldAlert size={20} />
+    },
+
+    {
+      "id": "qwen",
+      "title": "Qwen Reasoning Agent",
+      icon: <Sparkles size={20} />
+    },
+
+    {
+      "id": "final",
+      "title": "Final Mission Plan",
+      icon: <Route size={20} />
+    },
+  ];
+
+  const [activeStep, setActiveStep] = useState(-1);
+  const [workflowVisible, setWorkflowVisible] = useState(false);
+
+  const getStepStatus = (index) => {
+    if (!workflowVisible) return "waiting";
+    if (index < activeStep) return "done";
+    if (index === activeStep) return "running";
+    return "waiting";
+  };
 
   const loadKnowledge = async () => {
     try {
@@ -134,13 +212,34 @@ export default function App() {
 
     setLoading(true);
     setMission(null);
+    setWorkflowVisible(true);
+    setActiveStep(0);
+
+    const interval = setInterval(() => {
+      setActiveStep((prev) => {
+        if (prev < baseWorkflow.length - 2) {
+          return prev + 1;
+        }
+        return prev;
+      });
+    }, 700);
 
     try {
       const response = await axios.post(`${API_URL}/mission`, { goal });
-      setMission(response.data);
-      setGoal("");
-      loadMissions();
+
+      clearInterval(interval);
+      setActiveStep(baseWorkflow.length - 1);
+
+      setTimeout(() => {
+        setMission(response.data);
+        setActiveStep(baseWorkflow.length);
+        setGoal("");
+        loadMissions();
+        loadMemories();
+        loadKnowledge();
+      }, 500);
     } catch {
+      clearInterval(interval);
       setMission({
         mode: "frontend_error",
         final_answer:
@@ -262,6 +361,26 @@ export default function App() {
               {loading ? "Agents thinking..." : "Start Mission Mode"}
             </button>
           </div>
+
+          {workflowVisible && (
+            <div className="workflow-card">
+              <div className="workflow-title">
+                <Route size={20} />
+                <h2>Agent Workflow</h2>
+              </div>
+
+              <div className="workflow-list">
+                {baseWorkflow.map((step, index) => (
+                  <WorkflowStep
+                    key={step.id}
+                    icon={step.icon}
+                    title={step.title}
+                    status={getStepStatus(index)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </section>
 
         {mission && (
