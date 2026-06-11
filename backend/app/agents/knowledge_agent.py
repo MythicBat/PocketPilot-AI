@@ -1,13 +1,30 @@
+from app.agents.knowledge_vault import search_knowledge
+
+
 def knowledge_agent(user_goal: str) -> str:
-    return f"""
+    items = search_knowledge(user_goal)
+
+    if not items:
+        return f"""
 Knowledge Agent Output:
+
+No saved knowledge found yet.
 
 For the goal: {user_goal}
 
-Useful knowledge actions:
-1. Search saved notes.
-2. Check uploaded documents.
-3. Summarize important information.
-4. Extract key facts.
-5. Prepare a quick reference guide.
+Recommended:
+1. Save travel notes, class notes, emergency info, or documents in Knowledge Vault.
+2. PocketPilot will use them offline in future missions.
+"""
+
+    knowledge_text = "\n\n".join(
+        [f"Title: {item.title}\nContent: {item.content[:600]}" for item in items]
+    )
+
+    return f"""
+Knowledge Agent Output:
+
+Relevant saved knowledge found:
+
+{knowledge_text}
 """

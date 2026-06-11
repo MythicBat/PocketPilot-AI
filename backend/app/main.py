@@ -4,7 +4,8 @@ from pydantic import BaseModel
 from contextlib import asynccontextmanager
 
 from app.agents.orchestrator import run_mission
-from app.database import init_db, SessionLocal, Mission, Memory
+from app.database import init_db, SessionLocal, Mission, Memory, KnowledgeItem
+from app.agents.knowledge_vault import save_knowledge
 
 app = FastAPI(
     title="PocketPilot AI",
@@ -114,3 +115,41 @@ def create_memory(request: MemoryRequest):
         "category": memory.category,
         "created_at": memory.created_at
     }
+
+class KnowledgeRequest(BaseModel):
+    title: str
+    content: str
+    source: str = "manual"
+
+@app.post("/knowledge")
+def create_knowledge(request: KnowledgeRequest):
+    item = save_knowledge(
+        title=request.title,
+        content=request.content,
+        source=request.source
+    )
+
+    return {
+        "id": item.id,
+        "title": item.title,
+        "content": item.content,
+        "source": item.source,
+        "created_at": item.created_at
+    }
+
+@app.get("/knowledge")
+def get_knowledge():
+    db = SessionLocal()
+    items = db.query(KnowledgeItem).order_by(KnowledgeItem.created_at.desc()).all()
+    db.close()
+
+    return [
+        {
+            "id": item.id,
+            "title": item.title,
+            "content": item.content,
+            "source": item.source,
+            "created_at": item.created_at
+        }
+        for item in items
+    ]

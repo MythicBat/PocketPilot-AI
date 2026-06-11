@@ -34,3 +34,12 @@ class Memory(Base):
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+
+class KnowledgeItem(Base):
+    __tablename__ = "knowledge_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+    source = Column(String, default="manual")
+    created_at = Column(DateTime, default=datetime.utcnow)
