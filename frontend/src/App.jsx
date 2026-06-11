@@ -10,6 +10,7 @@ import {
   Sparkles,
   History,
   PlusCircle,
+  Upload,
 } from "lucide-react";
 import "./App.css";
 
@@ -34,6 +35,36 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [memories, setMemories] = useState([]);
   const [newMemory, setNewMemory] = useState("");
+  const [knowledge, setKnowledge] = useState([]);
+
+  const loadKnowledge = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/knowledge`);
+      setKnowledge(response.data);
+    } catch (error) {
+      console.error("Could not load knowledge", error);
+    }
+  };
+
+  const uploadKnowledge = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      await axios.post(`${API_URL}/knowledge/upload`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      loadKnowledge();
+    } catch (error) {
+      console.error("Could not upload knowledge", error);
+    }
+  };
 
   const loadMemories = async () => {
     try {
@@ -74,7 +105,10 @@ export default function App() {
 
     const initialize = async () => {
       try {
-        // load memories first
+        // load knowledge first
+        await loadKnowledge();
+
+        // load memories
         await loadMemories();
 
         // then load missions
@@ -150,6 +184,33 @@ export default function App() {
               <div key={memory.id} className="memory-item">
                 <p>{memory.content}</p>
                 <span>{memory.category}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="knowledge-panel">
+          <div className="sidebar-title">
+            <Brain size={18} />
+            <h2>Knowledge Vault</h2>
+          </div>
+
+          <label className="upload-box">
+            <Upload size={18} />
+            Upload note/file
+            <input
+              type="file"
+              accept=".txt, .md, .csv, .pdf, .docx"
+              onChange={uploadKnowledge}
+              hidden
+            />
+          </label>
+
+          <div className="memory-list">
+            {knowledge.slice(0, 5).map((item) => (
+              <div key={item.id} className="memory-item">
+                <p>{item.title}</p>
+                <span>{item.source}</span>
               </div>
             ))}
           </div>

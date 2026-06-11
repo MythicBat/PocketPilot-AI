@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from app.agents.orchestrator import run_mission
 from app.database import init_db, SessionLocal, Mission, Memory, KnowledgeItem
 from app.agents.knowledge_vault import save_knowledge
+from app.utils.file_parser import parse_uploaded_file
 
 app = FastAPI(
     title="PocketPilot AI",
@@ -153,3 +154,26 @@ def get_knowledge():
         }
         for item in items
     ]
+
+@app.post("/knowledge/upload")
+async def upload_knowledge(file: UploadFile = File(...)):
+    content_bytes = await file.read()
+
+    content = parse_uploaded_file(
+        filename=file.filename,
+        content_bytes=content_bytes
+    )
+
+    item = save_knowledge(
+        title=file.filename,
+        content=content,
+        source="upload"
+    )
+
+    return {
+        "id": item.id,
+        "title": item.title,
+        "content": item.content[:500],
+        "source": item.source,
+        "created_at": item.created_at
+    }

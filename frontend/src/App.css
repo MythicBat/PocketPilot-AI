@@ -45,6 +45,25 @@
   color: #9ca3c7;
 }
 
+.knowledge-panel {
+  margin-bottom: 28px;
+}
+
+.upload-box {
+  width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px dashed rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.07);
+  color: #edf0ff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
 .layout {
   display: grid;
   grid-template-columns: 320px 1fr;
