@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from app.agents.orchestrator import run_mission
 from app.database import init_db, SessionLocal, Mission, Memory, KnowledgeItem, UserProfile
 from app.agents.knowledge_vault import save_knowledge
+from app.agents.goal_simulator import simulate_goal
 from app.utils.file_parser import parse_uploaded_file
 from app.utils.pdf_exporter import create_mission_pdf
 from app.services.embedding_service import create_embedding
@@ -289,3 +290,14 @@ def update_profile(request: UserProfileRequest):
             "updated_at": profile.updated_at
         }
     }
+
+class GoalSimulationRequest(BaseModel):
+    goal: str
+    timeframe: str = "3 months"
+
+@app.post("/simulate-goal")
+def simulate_user_goal(request: GoalSimulationRequest):
+    return simulate_goal(
+        goal=request.goal,
+        timeframe=request.timeframe
+    )

@@ -16,6 +16,7 @@ import {
   Loader2,
   Download,
   User,
+  Target,
 } from "lucide-react";
 import "./App.css";
 
@@ -68,6 +69,11 @@ export default function App() {
   const [memories, setMemories] = useState([]);
   const [newMemory, setNewMemory] = useState("");
   const [knowledge, setKnowledge] = useState([]);
+  const [simGoal, setSimGoal] = useState("");
+  const [simTimeframe, setSimTimeframe] = useState("3 months");
+  const [simulation, setSimulation] = useState(null);
+  const [simLoading, setSimLoading] = useState(false);
+
   const [profile, setProfile] = useState({
     name: "",
     budget_style: "",
@@ -76,6 +82,29 @@ export default function App() {
     planning_style: "",
     location: "",
   });
+
+  const runGoalSimulation = async () => {
+    if (!simGoal.trim()) return;
+
+    setSimLoading(true);
+    setSimulation(null);
+
+    try {
+      const response = await axios.get(`${API_URL}/simulate-goal`, {
+        goal: simGoal,
+        timeframe: simTimeframe,
+      });
+
+      setSimulation(response.data);
+    } catch {
+      setSimulation({
+        mode: "frontend_error",
+        simulation: "Could not run Goal Simulation.",
+      });
+    } finally {
+      setSimLoading(false);
+    }
+  };
 
   const loadProfile = async () => {
     try {
@@ -474,6 +503,48 @@ export default function App() {
                   />
                 ))}
               </div>
+            </div>
+          )}
+        </section>
+
+        <section className="simulator-card">
+          <div className="workflow-title">
+            <Target size={20} />
+            <h2>Goal Simulator</h2>
+          </div>
+
+          <p className="simulator-subtitle">
+            Simulate a realistic path from where you are now to where you want to be.
+          </p>
+
+          <textarea
+            value={simGoal}
+            onChange={(e) => setSimGoal(e.target.value)}
+          />
+
+          <input
+            className="profile-input"
+            value={simTimeframe}
+            onChange={(e) => setSimTimeframe(e.target.value)}
+            placeholder="Timeframe..."
+          />
+
+          <button onClick={runGoalSimulation} disabled={simLoading}>
+            {simLoading ? "Simulating Goal..." : "Run Goal Simulation"}
+          </button>
+
+          {simulation && (
+            <div className="simulation-result">
+              <h2>
+                Simulation Mode:{" "}
+                {simulation.mode === "qwen_cloud"
+                  ? "Qwen Cloud"
+                  : simulation.mode === "ollama_offline"
+                  ? "Local Ollama"
+                  : "Offline Fallback"}
+              </h2>
+
+              <pre>{simulation.simulation}</pre>
             </div>
           )}
         </section>
