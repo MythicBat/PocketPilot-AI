@@ -58,6 +58,16 @@ Create a polished mission plan with:
 3. Offline preparation
 4. Risks
 5. Final checklist
+
+Create clean HTML-free plain text.
+
+Rules:
+- Use headings only.
+- Use bullet points.
+- Do NOT use markdown tables.
+- Do NOT use code blocks.
+- Do NOT use ###, **, or markdown formatting.
+- Use readable business-report formatting.
 """
 
     if not QWEN_API_KEY:

@@ -61,6 +61,16 @@ Create a detailed Goal Simulation with this structure:
 8. Success Metrics
 9. Final Execution Checklist
 
+Create clean HTML-free plain text.
+
+Rules:
+- Use headings only.
+- Use bullet points.
+- Do NOT use markdown tables.
+- Do NOT use code blocks.
+- Do NOT use ###, **, or markdown formatting.
+- Use readable business-report formatting.
+
 Make it realistic, specific, and useful.
 """
 

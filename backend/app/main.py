@@ -1,3 +1,4 @@
+import json
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -11,6 +12,11 @@ from app.agents.goal_simulator import simulate_goal
 from app.utils.file_parser import parse_uploaded_file
 from app.utils.pdf_exporter import create_mission_pdf
 from app.services.embedding_service import create_embedding
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
 
 app = FastAPI(
     title="PocketPilot AI",
@@ -30,13 +36,6 @@ app.add_middleware(
 
 class MissionRequest(BaseModel):
     goal: str
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    init_db()
-    yield
-
 
 @app.get("/")
 def home():

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import axios from "axios";
 import {
   Brain,
@@ -90,7 +92,7 @@ export default function App() {
     setSimulation(null);
 
     try {
-      const response = await axios.get(`${API_URL}/simulate-goal`, {
+      const response = await axios.post(`${API_URL}/simulate-goal`, {
         goal: simGoal,
         timeframe: simTimeframe,
       });
@@ -536,7 +538,11 @@ export default function App() {
               : "Offline Fallback"}
           </h2>
 
-          <pre>{simulation.simulation}</pre>
+          <div className="markdown-content">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {simulation.simulation}
+            </ReactMarkdown>
+          </div>
         </section>
       )}
 
@@ -567,7 +573,11 @@ export default function App() {
               </button>
             )}
 
-            <pre>{mission.final_answer}</pre>
+            <div className="markdown-content">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {mission.final_answer}
+              </ReactMarkdown>
+            </div>
           </div>
 
           {(mission.planner || mission.knowledge || mission.emergency || mission.memory) && (

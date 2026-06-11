@@ -2,9 +2,17 @@ from io import BytesIO
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
+import re
 
+def clean_markdown(text):
+    text = re.sub(r"#+\s*", "", text)
+    text = re.sub(r"\*\*", "", text)
+    text = re.sub(r"\*", "", text)
+    text = re.sub(r"`", "", text)
+    return text
 
 def create_mission_pdf(goal: str, final_answer: str):
+    final_answer = clean_markdown(final_answer)
     buffer = BytesIO()
 
     doc = SimpleDocTemplate(
