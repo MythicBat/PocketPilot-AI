@@ -1,8 +1,20 @@
 from app.database import SessionLocal, Memory
+from app.agents.memory_extractor import extract_memories_from_text
 
 
-def save_memory(content: str, category: str = "mission"):
+def save_memory(content: str, category: str = "general"):
     db = SessionLocal()
+
+    existing = (
+        db.query(Memory)
+        .filter(Memory.content == content)
+        .first()
+    )
+
+    if existing:
+        db.close()
+        return existing
+
     memory = Memory(content=content, category=category)
     db.add(memory)
     db.commit()
@@ -11,7 +23,7 @@ def save_memory(content: str, category: str = "mission"):
     return memory
 
 
-def get_recent_memories(limit: int = 5):
+def get_recent_memories(limit: int = 8):
     db = SessionLocal()
     memories = db.query(Memory).order_by(Memory.created_at.desc()).limit(limit).all()
     db.close()
@@ -19,18 +31,31 @@ def get_recent_memories(limit: int = 5):
 
 
 def memory_agent(user_goal: str) -> str:
-    save_memory(user_goal, "mission_goal")
+    extracted = extract_memories_from_text(user_goal)
+
+    saved = []
+    for item in extracted:
+        content = item.get("content")
+        category = item.get("category", "general")
+
+        if content:
+            saved.append(save_memory(content, category))
+
     memories = get_recent_memories()
 
     memory_text = "\n".join(
-        [f"- {memory.content}" for memory in memories]
+        [f"- [{memory.category}] {memory.content}" for memory in memories]
     )
+
+    extracted_text = "\n".join(
+        [f"- [{memory.category}] {memory.content}" for memory in saved]
+    ) or "No new long-term preferences detected."
 
     return f"""
 Memory Agent Output:
 
-Saved this mission goal permanently:
-"{user_goal}"
+New extracted memories:
+{extracted_text}
 
 Recent user memories:
 {memory_text}
