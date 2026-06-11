@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from contextlib import asynccontextmanager
 
 from app.agents.orchestrator import run_mission
-from app.database import init_db, SessionLocal, Mission
+from app.database import init_db, SessionLocal, Mission, Memory
 
 app = FastAPI(
     title="PocketPilot AI",
@@ -75,3 +75,42 @@ def get_missions():
         }
         for mission in missions
     ]
+
+@app.get("/memories")
+def get_memories():
+    db = SessionLocal()
+    memories = db.query(Memory).order_by(Memory.created_at.desc()).all()
+    db.close()
+
+    return [
+        {
+            "id": memory.id,
+            "content": memory.content,
+            "category": memory.category,
+            "created_at": memory.created_at
+        }
+        for memory in memories
+    ]
+
+class MemoryRequest(BaseModel):
+    content: str
+    category: str = "preference"
+
+@app.post("/memories")
+def create_memory(request: MemoryRequest):
+    db = SessionLocal()
+    memory = Memory(
+        content = request.content,
+        category = request.category
+    )
+    db.add(memory)
+    db.commit()
+    db.refresh(memory)
+    db.close()
+
+    return {
+        "id": memory.id,
+        "content": memory.content,
+        "category": memory.category,
+        "created_at": memory.created_at
+    }
