@@ -9,6 +9,7 @@ import {
   WifiOff,
   Sparkles,
   History,
+  PlusCircle,
 } from "lucide-react";
 import "./App.css";
 
@@ -31,6 +32,33 @@ export default function App() {
   const [mission, setMission] = useState(null);
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [memories, setMemories] = useState([]);
+  const [newMemory, setNewMemory] = useState("");
+
+  const loadMemories = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/memories`);
+      setMemories(response.data);
+    } catch (error) {
+      console.error("Could not load memories", error);
+    }
+  };
+
+  const saveMemory = async () => {
+    if (!newMemory.trim()) return;
+
+    try {
+      await axios.post(`${API_URL}/memories`, {
+        content: newMemory,
+        category: "preference",
+      });
+
+      setNewMemory("");
+      loadMemories();
+    } catch (error) {
+      console.error("Could not save memory", error);
+    }
+  };
 
   const loadMissions = async () => {
     try {
@@ -44,18 +72,23 @@ export default function App() {
   useEffect(() => {
     let isMounted = true;
 
-    const initializeMissions = async () => {
+    const initialize = async () => {
       try {
+        // load memories first
+        await loadMemories();
+
+        // then load missions
         const response = await axios.get(`${API_URL}/missions`);
         if (isMounted) {
           setMissions(response.data);
         }
       } catch (error) {
-        console.error("Could not load missions", error);
+        console.error("Could not load initial data", error);
       }
     };
 
-    initializeMissions();
+    // run initialization asynchronously to avoid synchronous setState in effect body
+    initialize();
 
     return () => {
       isMounted = false;
@@ -94,6 +127,34 @@ export default function App() {
   return (
     <main className="layout">
       <aside className="sidebar">
+        <div className="memory-panel">
+          <div className="sidebar-title">
+            <Database size={18} />
+            <h2>Memory</h2>
+          </div>
+
+          <textarea
+            className="memory-input"
+            value={newMemory}
+            onChange={(e) => setNewMemory(e.target.value)}
+            placeholder="Save a preference."
+          />
+
+          <button className="memory-button" onClick={saveMemory}>
+            <PlusCircle size={16} />
+            Save Memory
+          </button>
+
+          <div className="memory-list">
+            {memories.slice(0, 5).map((memory) => (
+              <div key={memory.id} className="memory-item">
+                <p>{memory.content}</p>
+                <span>{memory.category}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="sidebar-title">
           <History size={18} />
           <h2>Mission History</h2>
