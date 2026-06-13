@@ -1,8 +1,8 @@
 from app.agents.knowledge_vault import search_knowledge
 
 
-def knowledge_agent(user_goal: str) -> str:
-    items = search_knowledge(user_goal)
+def knowledge_agent(user_goal: str, user_id: int = None) -> str:
+    items = search_knowledge(user_goal, user_id=user_id)
 
     if not items:
         return f"""

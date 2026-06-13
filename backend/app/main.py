@@ -47,11 +47,12 @@ def home():
 
 
 @app.post("/mission")
-def create_mission(request: MissionRequest):
-    result = run_mission(request.goal)
+def create_mission(request: MissionRequest, current_user: UserProfile = Depends(get_current_user)):
+    result = run_mission(request.goal, current_user.id)
 
     db = SessionLocal()
     saved_mission = Mission(
+        user_id=current_user.id,
         goal=request.goal,
         mode=result["mode"],
         final_answer=result["final_answer"]
@@ -66,9 +67,9 @@ def create_mission(request: MissionRequest):
 
 
 @app.get("/missions")
-def get_missions():
+def get_missions(current_user: UserProfile = Depends(get_current_user)):
     db = SessionLocal()
-    missions = db.query(Mission).order_by(Mission.created_at.desc()).all()
+    missions = db.query(Mission).filter(Mission.user_id == current_user.id).order_by(Mission.created_at.desc()).all()
     db.close()
 
     return [
@@ -83,13 +84,13 @@ def get_missions():
     ]
 
 @app.get("/missions/{mission_id}/export")
-def export_mission_pdf(mission_id: int):
+def export_mission_pdf(mission_id: int, current_user: UserProfile = Depends(get_current_user)):
     db = SessionLocal()
-    mission = db.query(Mission).filter(Mission.id == mission_id).first()
+    mission = db.query(Mission).filter(Mission.id == mission_id, Mission.user_id == current_user.id).first()
     db.close()
 
     if not mission:
-        return {"error": "Mission not found"}
+        raise HTTPException(status_code=404, detail="Mission not found")
 
     pdf_buffer = create_mission_pdf(
         goal=mission.goal,
@@ -107,9 +108,9 @@ def export_mission_pdf(mission_id: int):
     )
 
 @app.get("/memories")
-def get_memories():
+def get_memories(current_user: UserProfile = Depends(get_current_user)):
     db = SessionLocal()
-    memories = db.query(Memory).order_by(Memory.created_at.desc()).all()
+    memories = db.query(Memory).filter(Memory.user_id == current_user.id).order_by(Memory.created_at.desc()).all()
     db.close()
 
     return [
@@ -127,9 +128,10 @@ class MemoryRequest(BaseModel):
     category: str = "preference"
 
 @app.post("/memories")
-def create_memory(request: MemoryRequest):
+def create_memory(request: MemoryRequest, current_user: UserProfile = Depends(get_current_user)):
     db = SessionLocal()
     memory = Memory(
+        user_id = current_user.id,
         content = request.content,
         category = request.category
     )
@@ -151,11 +153,12 @@ class KnowledgeRequest(BaseModel):
     source: str = "manual"
 
 @app.post("/knowledge")
-def create_knowledge(request: KnowledgeRequest):
+def create_knowledge(request: KnowledgeRequest, current_user: UserProfile = Depends(get_current_user)):
     item = save_knowledge(
         title=request.title,
         content=request.content,
-        source=request.source
+        source=request.source,
+        user_id=current_user.id
     )
 
     return {
@@ -167,9 +170,9 @@ def create_knowledge(request: KnowledgeRequest):
     }
 
 @app.get("/knowledge")
-def get_knowledge():
+def get_knowledge(current_user: UserProfile = Depends(get_current_user)):
     db = SessionLocal()
-    items = db.query(KnowledgeItem).order_by(KnowledgeItem.created_at.desc()).all()
+    items = db.query(KnowledgeItem).filter(KnowledgeItem.user_id == current_user.id).order_by(KnowledgeItem.created_at.desc()).all()
     db.close()
 
     return [
@@ -184,7 +187,7 @@ def get_knowledge():
     ]
 
 @app.post("/knowledge/upload")
-async def upload_knowledge(file: UploadFile = File(...)):
+async def upload_knowledge(file: UploadFile = File(...), current_user: UserProfile = Depends(get_current_user)):
     content_bytes = await file.read()
 
     content = parse_uploaded_file(
@@ -195,7 +198,8 @@ async def upload_knowledge(file: UploadFile = File(...)):
     item = save_knowledge(
         title=file.filename,
         content=content,
-        source="upload"
+        source="upload",
+        user_id=current_user.id
     )
 
     return {
@@ -207,10 +211,10 @@ async def upload_knowledge(file: UploadFile = File(...)):
     }
 
 @app.post("/knowledge/reindex")
-def reindex_knowledge():
+def reindex_knowledge(current_user: UserProfile = Depends(get_current_user)):
     db = SessionLocal()
 
-    items = db.query(KnowledgeItem).all()
+    items = db.query(KnowledgeItem).filter(KnowledgeItem.user_id == current_user.id).all()
 
     for item in items:
         item.embedding = json.dumps(
