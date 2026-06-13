@@ -26,9 +26,9 @@ I created a basic offline plan using local agents. Add your Qwen API key later t
     }
 
 
-def run_mission(user_goal: str) -> dict:
+def run_mission(user_goal: str, user_id: int = None) -> dict:
     planner = planner_agent(user_goal)
-    knowledge = knowledge_agent(user_goal)
+    knowledge = knowledge_agent(user_goal, user_id=user_id)
     emergency = emergency_agent(user_goal)
     memory = memory_agent(user_goal)
     profile_context = get_profile_context()
