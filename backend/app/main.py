@@ -1,5 +1,5 @@
 import json
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -12,6 +12,7 @@ from app.agents.goal_simulator import simulate_goal
 from app.utils.file_parser import parse_uploaded_file
 from app.utils.pdf_exporter import create_mission_pdf
 from app.services.embedding_service import create_embedding
+from app.auth import hash_password, verify_password, create_access_token, get_current_user
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -300,3 +301,156 @@ def simulate_user_goal(request: GoalSimulationRequest):
         goal=request.goal,
         timeframe=request.timeframe
     )
+
+class RegisterRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+    avatar: str = "friendly"
+    location: str = ""
+    budget_style: str = ""
+    transport_preference: str = ""
+    food_preference: str = ""
+    planning_style: str = ""
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class UpdateUserRequest(BaseModel):
+    name: str
+    avatar: str
+    location: str = ""
+    budget_style: str = ""
+    transport_preference: str = ""
+    food_preference: str = ""
+    planning_style: str = ""
+
+@app.post("/register")
+def register(request: RegisterRequest):
+    db = SessionLocal()
+
+    existing_user = db.query(User).filter(User.email == request.email).first()
+
+    if existing_user:
+        db.close()
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    user = User(
+        name=request.name,
+        email=request.email,
+        password_hash=hash_password(request.password),
+        avatar=request.avatar,
+        location=request.location,
+        budget_style=request.budget_style,
+        transport_preference=request.transport_preference,
+        food_preference=request.food_preference,
+        planning_style=request.planning_style,
+    )
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    db.close()
+
+    token = create_access_token({"user_id": user.id})
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "avatar": user.avatar,
+            "location": user.location,
+            "budget_style": user.budget_style,
+            "transport_preference": user.transport_preference,
+            "food_preference": user.food_preference,
+            "planning_style": user.planning_style,
+        }
+    }
+
+
+@app.post("/login")
+def login(request: LoginRequest):
+    db = SessionLocal()
+
+    user = db.query(User).filter(User.email == request.email).first()
+
+    if not user or not verify_password(request.password, user.password_hash):
+        db.close()
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    db.close()
+
+    token = create_access_token({"user_id": user.id})
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "avatar": user.avatar,
+            "location": user.location,
+            "budget_style": user.budget_style,
+            "transport_preference": user.transport_preference,
+            "food_preference": user.food_preference,
+            "planning_style": user.planning_style,
+        }
+    }
+
+
+@app.get("/me")
+def me(current_user: User = Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email,
+        "avatar": current_user.avatar,
+        "location": current_user.location,
+        "budget_style": current_user.budget_style,
+        "transport_preference": current_user.transport_preference,
+        "food_preference": current_user.food_preference,
+        "planning_style": current_user.planning_style,
+    }
+
+
+@app.put("/me")
+def update_me(
+    request: UpdateUserRequest,
+    current_user: User = Depends(get_current_user)
+):
+    db = SessionLocal()
+    user = db.query(User).filter(User.id == current_user.id).first()
+
+    user.name = request.name
+    user.avatar = request.avatar
+    user.location = request.location
+    user.budget_style = request.budget_style
+    user.transport_preference = request.transport_preference
+    user.food_preference = request.food_preference
+    user.planning_style = request.planning_style
+
+    db.commit()
+    db.refresh(user)
+    db.close()
+
+    return {
+        "message": "Profile updated",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "avatar": user.avatar,
+            "location": user.location,
+            "budget_style": user.budget_style,
+            "transport_preference": user.transport_preference,
+            "food_preference": user.food_preference,
+            "planning_style": user.planning_style,
+        }
+    }

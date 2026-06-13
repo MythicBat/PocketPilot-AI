@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
 
@@ -17,6 +17,7 @@ class Mission(Base):
     __tablename__ = "missions"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user_profile.id"), nullable=True)
     goal = Column(Text, nullable=False)
     mode = Column(String, nullable=False)
     final_answer = Column(Text, nullable=False)
@@ -27,6 +28,7 @@ class Memory(Base):
     __tablename__ = "memories"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user_profile.id"), nullable=True)
     content = Column(Text, nullable=False)
     category = Column(String, default="general")
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -39,6 +41,7 @@ class KnowledgeItem(Base):
     __tablename__ = "knowledge_items"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user_profile.id"), nullable=True)
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     source = Column(String, default="manual")
@@ -51,10 +54,16 @@ class UserProfile(Base):
     __tablename__ = "user_profile"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, default="")
+    name = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    password_hash = Column(String, nullable=False)
+
+    avatar = Column(String, default="friendly")
+    location = Column(String, default="")
     budget_style = Column(String, default="")
     transport_preference = Column(String, default="")
     food_preference = Column(String, default="")
     planning_style = Column(String, default="")
-    location = Column(String, default="")
+
+    created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
