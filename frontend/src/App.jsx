@@ -24,6 +24,7 @@ import {
 import "./App.css";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import SettingsPage from "./pages/SettingsPage";
 
 const API_URL = "http://127.0.0.1:8000";
 
@@ -94,8 +95,9 @@ export default function App() {
     const storedUser = localStorage.getItem("user");
     return storedUser ? JSON.parse(storedUser) : null;
   });
+  const [showSettings, setShowSettings] = useState(false);
 
-  const [profile, setProfile] = useState({
+  const [setProfile] = useState({
     name: "",
     budget_style: "",
     transport_preference: "",
@@ -136,31 +138,37 @@ export default function App() {
     }
   };
 
-  const saveProfile = async () => {
-    try {
-      await axios.post(`${API_URL}/me`, {
-        name: profile.name,
-        avatar: currentUser.avatar,
-        location: profile.location,
-        budget_style: profile.budget_style,
-        transport_preference: profile.transport_preference,
-        food_preference: profile.food_preference,
-        planning_style: profile.planning_style,
-      });
-      await loadProfile();
-      toast.success("Profile saved");
-    } catch (error) {
-      console.error("Could not save profile", error);
-      toast.error("Could not save profile");
-    }
-  };
+  // const saveProfile = async () => {
+  //   try {
+  //     const response = await axios.post(`${API_URL}/me`, {
+  //       name: profile.name,
+  //       avatar: currentUser.avatar,
+  //       location: profile.location,
+  //       budget_style: profile.budget_style,
+  //       transport_preference: profile.transport_preference,
+  //       food_preference: profile.food_preference,
+  //       planning_style: profile.planning_style,
+  //     });
+      
+  //     const updatedUser = response.data.user;
 
-  const updateProfileField = (field, value) => {
-    setProfile((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+  //     setProfile(updatedUser);
+  //     setCurrentUser(updatedUser);
+  //     localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+  //     toast.success("Profile saved");
+  //   } catch (error) {
+  //     console.error("Could not save profile", error);
+  //     toast.error("Could not save profile");
+  //   }
+  // };
+
+  // const updateProfileField = (field, value) => {
+  //   setProfile((prev) => ({
+  //     ...prev,
+  //     [field]: value,
+  //   }));
+  // };
 
   const baseWorkflow = [
     {
@@ -422,20 +430,6 @@ export default function App() {
   };
 
   if (!currentUser) {
-    return authMode === "login" ? (
-      <LoginPage
-        onLogin={handleLogin}
-        onSwitchToRegister={() => setAuthMode("register")}
-      />
-    ) : (
-      <RegisterPage
-        onRegister={handleLogin}
-        onSwitchToLogin={() => setAuthMode("login")}
-      />
-    );
-  }
-
-  if (!currentUser) {
   return (
     <>
       <Toaster position="top-right" />
@@ -450,6 +444,23 @@ export default function App() {
           onSwitchToLogin={() => setAuthMode("login")}
         />
       )}
+    </>
+  );
+}
+
+if (showSettings) {
+  return (
+    <>
+      <Toaster position="top-right" />
+      <SettingsPage
+        user={currentUser}
+        onBack={() => setShowSettings(false)}
+        onUserUpdated={(updatedUser) => {
+          setCurrentUser(updatedUser);
+          setProfile(updatedUser);
+          setShowSettings(false);
+        }}
+      />
     </>
   );
 }
@@ -469,59 +480,23 @@ return (
         </div>
       </div>
 
-      <div className="profile-panel card">
-        <div className="sidebar-title">
-          <User size={18} />
-          <h2>User Profile</h2>
+      <div className="profile-summary card">
+        <div className="profile-avatar">
+          {avatarMap[currentUser.avatar] || "🙂"}
         </div>
 
-        <input
-          className="profile-input"
-          value={profile.name}
-          onChange={(e) => updateProfileField("name", e.target.value)}
-          placeholder="Enter your name"
-        />
+        <h2>{currentUser.name}</h2>
+        <p>{currentUser.location || "Location not set"}</p>
 
-        <input
-          className="profile-input"
-          value={profile.location}
-          onChange={(e) => updateProfileField("location", e.target.value)}
-          placeholder="Enter your location"
-        />
+        <div className="profile-tags">
+          <span>{currentUser.budget_style || "Budget style not set"}</span>
+          <span>{currentUser.transport_preference || "Transport preference not set"}</span>
+          <span>{currentUser.food_preference || "Food not set"}</span>
+        </div>
 
-        <input
-          className="profile-input"
-          value={profile.budget_style}
-          onChange={(e) => updateProfileField("budget_style", e.target.value)}
-          placeholder="e.g. Budget-friendly"
-        />
-
-        <input
-          className="profile-input"
-          value={profile.transport_preference}
-          onChange={(e) =>
-            updateProfileField("transport_preference", e.target.value)
-          }
-          placeholder="e.g. Public transport"
-        />
-
-        <input
-          className="profile-input"
-          value={profile.food_preference}
-          onChange={(e) => updateProfileField("food_preference", e.target.value)}
-          placeholder="e.g. Vegetarian"
-        />
-
-        <input
-          className="profile-input"
-          value={profile.planning_style}
-          onChange={(e) => updateProfileField("planning_style", e.target.value)}
-          placeholder="e.g. Checklist-based"
-        />
-
-        <button className="memory-button" onClick={saveProfile}>
-          <Download size={16} />
-          Save Profile
+        <button className="memory-button" onClick={() => setShowSettings(true)}>
+          <User size={16} />
+          Open Settings
         </button>
       </div>
 

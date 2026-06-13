@@ -785,3 +785,54 @@ button:disabled {
   border-radius: 14px;
   font-size: 13px;
 }
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+}
+
+.profile-summary {
+  padding: 20px;
+  margin-bottom: 18px;
+  text-align: center;
+}
+
+.profile-avatar {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 38px;
+}
+
+.profile-summary h2 {
+  margin: 0 0 6px;
+  color: white;
+}
+
+.profile-summary p {
+  margin: 0 0 14px;
+  color: #b8bddc;
+}
+
+.profile-tags {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.profile-tags span {
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #d8dcf5;
+  font-size: 12px;
+}
