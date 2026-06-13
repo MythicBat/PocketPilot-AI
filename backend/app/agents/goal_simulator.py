@@ -49,27 +49,42 @@ User Memories:
 Knowledge Context:
 {knowledge_context}
 
-Create a detailed Goal Simulation with this structure:
+Create a detailed Goal Simulation using this exact format:
 
-1. Goal Summary
-2. Assumptions
-3. Current State Analysis
-4. Phase-by-Phase Roadmap
-5. Weekly/Monthly Timeline
-6. Required Resources
-7. Risks and Mitigation
-8. Success Metrics
-9. Final Execution Checklist
+GOAL SUMMARY
+- Short explanation of the goal.
 
-Create clean HTML-free plain text.
+ASSUMPTIONS
+- Clear assumptions.
 
-Rules:
-- Use headings only.
-- Use bullet points.
-- Do NOT use markdown tables.
-- Do NOT use code blocks.
-- Do NOT use ###, **, or markdown formatting.
-- Use readable business-report formatting.
+CURRENT STATE ANALYSIS
+- Practical analysis of where the user is now.
+
+PHASE-BY-PHASE ROADMAP
+- Break the goal into clear phases.
+
+TIMELINE
+- Weekly or monthly timeline depending on the timeframe.
+
+REQUIRED RESOURCES
+- Tools, documents, skills, people, or money needed.
+
+RISKS AND MITIGATION
+- Risks and realistic ways to reduce them.
+
+SUCCESS METRICS
+- How the user knows they are making progress.
+
+FINAL EXECUTION CHECKLIST
+- Simple checklist bullets.
+
+Formatting rules:
+- Do not use markdown tables.
+- Do not use ### headings.
+- Do not use **bold** markdown.
+- Do not use code blocks.
+- Do not use excessive emojis.
+- Use clean plain-text headings and bullet points.
 
 Make it realistic, specific, and useful.
 """

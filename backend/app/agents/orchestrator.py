@@ -52,22 +52,31 @@ Agent outputs:
 
 {memory}
 
-Create a polished mission plan with:
-1. Summary
-2. Step-by-step action plan
-3. Offline preparation
-4. Risks
-5. Final checklist
+Create a polished mission plan using this exact format:
 
-Create clean HTML-free plain text.
+MISSION SUMMARY
+- Write a short useful summary.
 
-Rules:
-- Use headings only.
-- Use bullet points.
-- Do NOT use markdown tables.
-- Do NOT use code blocks.
-- Do NOT use ###, **, or markdown formatting.
-- Use readable business-report formatting.
+ACTION PLAN
+- Use clear bullet points.
+- Keep each task practical and specific.
+
+OFFLINE PREPARATION
+- List what the user should save, download, print, or prepare.
+
+RISKS AND MITIGATION
+- List each risk followed by a practical mitigation.
+
+FINAL CHECKLIST
+- Use simple checklist bullets.
+
+Formatting rules:
+- Do not use markdown tables.
+- Do not use ### headings.
+- Do not use **bold** markdown.
+- Do not use code blocks.
+- Do not use excessive emojis.
+- Use clean plain-text headings and bullet points.
 """
 
     if not QWEN_API_KEY:
