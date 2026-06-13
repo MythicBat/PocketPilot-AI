@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
 import {
   Brain,
   CalendarCheck,
@@ -120,9 +121,11 @@ export default function App() {
   const saveProfile = async () => {
     try {
       await axios.post(`${API_URL}/profile`, profile);
-      loadProfile();
+      await loadProfile();
+      toast.success("Profile saved");
     } catch (error) {
       console.error("Could not save profile", error);
+      toast.error("Could not save profile");
     }
   };
 
@@ -192,21 +195,28 @@ export default function App() {
 
   const uploadKnowledge = async (event) => {
     const file = event.target.files[0];
-    if (!file) return;
+    if (!file) {
+      toast.error("No file selected");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("file", file);
 
     try {
+      toast.loading("Uploading Knowledge...", {id: "upload"});
+
       await axios.post(`${API_URL}/knowledge/upload`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      loadKnowledge();
+      await loadKnowledge();
+      toast.success("Knowledge Uploaded.", {id: "upload"});
     } catch (error) {
       console.error("Could not upload knowledge", error);
+      toast.error("Upload failed", {id: "upload"});
     }
   };
 
@@ -220,7 +230,10 @@ export default function App() {
   };
 
   const saveMemory = async () => {
-    if (!newMemory.trim()) return;
+    if (!newMemory.trim()) {
+      toast.error("Memory cannot be saved");
+      return;
+    }
 
     try {
       await axios.post(`${API_URL}/memories`, {
@@ -229,9 +242,11 @@ export default function App() {
       });
 
       setNewMemory("");
-      loadMemories();
+      await loadMemories();
+      toast.success("Memory saved");
     } catch (error) {
       console.error("Could not save memory", error);
+      toast.error("Could not save memory");
     }
   };
 
@@ -305,6 +320,7 @@ export default function App() {
         loadMissions();
         loadMemories();
         loadKnowledge();
+        toast.success("Mission generated");
       }, 500);
     } catch {
       clearInterval(interval);
@@ -313,6 +329,7 @@ export default function App() {
         final_answer:
           "Could not connect to backend. Make sure FastAPI is running.",
       });
+      toast.error("Mission failed");
     } finally {
       setLoading(false);
     }
@@ -333,6 +350,7 @@ export default function App() {
 
   return (
   <main className="layout">
+    <Toaster position="top-right" />
     <aside className="sidebar">
       <div className="brand-card">
         <Sparkles size={32} />
