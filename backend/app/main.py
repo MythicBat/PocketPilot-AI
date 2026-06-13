@@ -336,13 +336,13 @@ class UpdateUserRequest(BaseModel):
 def register(request: RegisterRequest):
     db = SessionLocal()
 
-    existing_user = db.query(User).filter(User.email == request.email).first()
+    existing_user = db.query(UserProfile).filter(UserProfile.email == request.email).first()
 
     if existing_user:
         db.close()
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    user = User(
+    user = UserProfile(
         name=request.name,
         email=request.email,
         password_hash=hash_password(request.password),
@@ -382,7 +382,7 @@ def register(request: RegisterRequest):
 def login(request: LoginRequest):
     db = SessionLocal()
 
-    user = db.query(User).filter(User.email == request.email).first()
+    user = db.query(UserProfile).filter(UserProfile.email == request.email).first()
 
     if not user or not verify_password(request.password, user.password_hash):
         db.close()
@@ -410,7 +410,7 @@ def login(request: LoginRequest):
 
 
 @app.get("/me")
-def me(current_user: User = Depends(get_current_user)):
+def me(current_user: UserProfile = Depends(get_current_user)):
     return {
         "id": current_user.id,
         "name": current_user.name,
@@ -427,10 +427,10 @@ def me(current_user: User = Depends(get_current_user)):
 @app.put("/me")
 def update_me(
     request: UpdateUserRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: UserProfile = Depends(get_current_user)
 ):
     db = SessionLocal()
-    user = db.query(User).filter(User.id == current_user.id).first()
+    user = db.query(UserProfile).filter(UserProfile.id == current_user.id).first()
 
     user.name = request.name
     user.avatar = request.avatar

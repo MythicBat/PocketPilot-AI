@@ -17,10 +17,16 @@ def save_knowledge(title: str, content: str, source: str = "manual", user_id: in
 def search_knowledge(query: str, limit: int = 5, user_id: int = None):
     db = SessionLocal()
 
-    items = db.query(KnowledgeItem).all()
+    items_query = db.query(KnowledgeItem)
 
     if user_id is not None:
-        items = items.filter(KnowledgeItem.user_id == user_id)
+        items_query = items_query.filter(KnowledgeItem.user_id == user_id)
+    
+    items = items_query.all()
+
+    if not items:
+        db.close()
+        return []
 
     query_embedding = create_embedding(query)
 

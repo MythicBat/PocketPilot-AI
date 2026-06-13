@@ -22,6 +22,8 @@ import {
   Target,
 } from "lucide-react";
 import "./App.css";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 
 const API_URL = "http://127.0.0.1:8000";
 
@@ -64,6 +66,17 @@ function WorkflowStep({ icon, title, status }) {
   );
 }
 
+const avatarMap = {
+  friendly: "🙂",
+  student: "🎒",
+  explorer: "🚀",
+  thinker: "🧠",
+  calm: "🌿",
+  professional: "💼",
+  traveller: "🌍",
+  cozy: "🐱",
+};
+
 export default function App() {
   const [goal, setGoal] = useState("");
   const [mission, setMission] = useState(null);
@@ -76,6 +89,11 @@ export default function App() {
   const [simTimeframe, setSimTimeframe] = useState("3 months");
   const [simulation, setSimulation] = useState(null);
   const [simLoading, setSimLoading] = useState(false);
+  const [authMode, setAuthMode] = useState("login");
+  const [currentUser, setCurrentUser] = useState(() => {
+    const storedUser = localStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
 
   const [profile, setProfile] = useState({
     name: "",
@@ -111,7 +129,7 @@ export default function App() {
 
   const loadProfile = async () => {
     try {
-      const response = await axios.get(`${API_URL}/profile`);
+      const response = await axios.get(`${API_URL}/me`);
       setProfile(response.data);
     } catch (error) {
       console.error("Could not load profile", error);
@@ -120,7 +138,15 @@ export default function App() {
 
   const saveProfile = async () => {
     try {
-      await axios.post(`${API_URL}/profile`, profile);
+      await axios.post(`${API_URL}/me`, {
+        name: profile.name,
+        avatar: currentUser.avatar,
+        location: profile.location,
+        budget_style: profile.budget_style,
+        transport_preference: profile.transport_preference,
+        food_preference: profile.food_preference,
+        planning_style: profile.planning_style,
+      });
       await loadProfile();
       toast.success("Profile saved");
     } catch (error) {
@@ -259,8 +285,34 @@ export default function App() {
     }
   };
 
+  const handleLogin = (user) => {
+    setCurrentUser(user);
+    loadProfile();
+    loadMissions();
+    loadMemories();
+    loadKnowledge();
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    delete axios.defaults.headers.common["Authorization"];
+    setCurrentUser(null);
+    setMission(null);
+    setSimulation(null);
+    setMissions([]);
+    setMemories([]);
+    setKnowledge([]);
+  };
+
   useEffect(() => {
     let isMounted = true;
+
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    }
 
     const initialize = async () => {
       try {
@@ -343,14 +395,69 @@ export default function App() {
     });
   };
 
-  const exportMission = () => {
+  const exportMission = async () => {
     if (!mission?.mission_id) return;
-    window.open(`${API_URL}/missions/${mission.mission_id}/export`, "_blank");
+
+    try {
+      const response = await axios.get(`${API_URL}/missions/${mission.mission_id}/export`, {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `mission_${mission.mission_id}.pdf`;
+
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+
+      toast.success("PDF Exported");
+    } catch (error) {
+      console.error(error);
+      toast.error("Could not export PDF");
+    }
   };
 
+  if (!currentUser) {
+    return authMode === "login" ? (
+      <LoginPage
+        onLogin={handleLogin}
+        onSwitchToRegister={() => setAuthMode("register")}
+      />
+    ) : (
+      <RegisterPage
+        onRegister={handleLogin}
+        onSwitchToLogin={() => setAuthMode("login")}
+      />
+    );
+  }
+
+  if (!currentUser) {
   return (
+    <>
+      <Toaster position="top-right" />
+      {authMode === "login" ? (
+        <LoginPage
+          onLogin={handleLogin}
+          onSwitchToRegister={() => setAuthMode("register")}
+        />
+      ) : (
+        <RegisterPage
+          onRegister={handleLogin}
+          onSwitchToLogin={() => setAuthMode("login")}
+        />
+      )}
+    </>
+  );
+}
+
+return (
   <main className="layout">
     <Toaster position="top-right" />
+
     <aside className="sidebar">
       <div className="brand-card">
         <Sparkles size={32} />
@@ -368,12 +475,49 @@ export default function App() {
           <h2>User Profile</h2>
         </div>
 
-        <input className="profile-input" value={profile.name} onChange={(e) => updateProfileField("name", e.target.value)} placeholder="Enter your name" />
-        <input className="profile-input" value={profile.location} onChange={(e) => updateProfileField("location", e.target.value)} placeholder="Enter your location" />
-        <input className="profile-input" value={profile.budget_style} onChange={(e) => updateProfileField("budget_style", e.target.value)} placeholder="e.g. Budget-friendly" />
-        <input className="profile-input" value={profile.transport_preference} onChange={(e) => updateProfileField("transport_preference", e.target.value)} placeholder="e.g. Public transport" />
-        <input className="profile-input" value={profile.food_preference} onChange={(e) => updateProfileField("food_preference", e.target.value)} placeholder="e.g. Vegetarian" />
-        <input className="profile-input" value={profile.planning_style} onChange={(e) => updateProfileField("planning_style", e.target.value)} placeholder="e.g. Checklist-based" />
+        <input
+          className="profile-input"
+          value={profile.name}
+          onChange={(e) => updateProfileField("name", e.target.value)}
+          placeholder="Enter your name"
+        />
+
+        <input
+          className="profile-input"
+          value={profile.location}
+          onChange={(e) => updateProfileField("location", e.target.value)}
+          placeholder="Enter your location"
+        />
+
+        <input
+          className="profile-input"
+          value={profile.budget_style}
+          onChange={(e) => updateProfileField("budget_style", e.target.value)}
+          placeholder="e.g. Budget-friendly"
+        />
+
+        <input
+          className="profile-input"
+          value={profile.transport_preference}
+          onChange={(e) =>
+            updateProfileField("transport_preference", e.target.value)
+          }
+          placeholder="e.g. Public transport"
+        />
+
+        <input
+          className="profile-input"
+          value={profile.food_preference}
+          onChange={(e) => updateProfileField("food_preference", e.target.value)}
+          placeholder="e.g. Vegetarian"
+        />
+
+        <input
+          className="profile-input"
+          value={profile.planning_style}
+          onChange={(e) => updateProfileField("planning_style", e.target.value)}
+          placeholder="e.g. Checklist-based"
+        />
 
         <button className="memory-button" onClick={saveProfile}>
           <Download size={16} />
@@ -412,6 +556,19 @@ export default function App() {
     </aside>
 
     <section className="main-content">
+      <header className="dashboard-header">
+        <div>
+          <p className="welcome-label">Welcome back</p>
+          <h2>{currentUser.name}</h2>
+        </div>
+
+        <div className="user-chip">
+          <span>{avatarMap[currentUser.avatar] || "🙂"}</span>
+          <strong>{currentUser.name}</strong>
+          <button onClick={handleLogout}>Logout</button>
+        </div>
+      </header>
+
       <section className="dashboard-card">
         <div className="section-heading">
           <Database size={20} />
@@ -435,12 +592,18 @@ export default function App() {
         </button>
 
         <div className="memory-list">
-          {memories.slice(0, 5).map((memory) => (
-            <div key={memory.id} className="memory-item">
-              <p>{memory.content}</p>
-              <span>{memory.category}</span>
+          {memories.length === 0 ? (
+            <div className="empty-state small">
+              <p>No memories saved yet.</p>
             </div>
-          ))}
+          ) : (
+            memories.slice(0, 5).map((memory) => (
+              <div key={memory.id} className="memory-item">
+                <p>{memory.content}</p>
+                <span>{memory.category}</span>
+              </div>
+            ))
+          )}
         </div>
       </section>
 
@@ -451,7 +614,7 @@ export default function App() {
         </div>
 
         <p className="section-description">
-          Upload notes, documents, PDFs to build your personal knowledge base.
+          Upload notes, documents, and PDFs to build your personal knowledge base.
         </p>
 
         <label className="upload-box">
@@ -460,19 +623,25 @@ export default function App() {
           <span>PDF, DOCX, TXT up to 20MB</span>
           <input
             type="file"
-            accept=".txt, .md, .csv, .pdf, .docx"
+            accept=".txt,.md,.csv,.pdf,.docx"
             onChange={uploadKnowledge}
             hidden
           />
         </label>
 
         <div className="memory-list">
-          {knowledge.slice(0, 5).map((item) => (
-            <div key={item.id} className="memory-item">
-              <p>{item.title}</p>
-              <span>{item.source}</span>
+          {knowledge.length === 0 ? (
+            <div className="empty-state small">
+              <p>No knowledge files uploaded yet.</p>
             </div>
-          ))}
+          ) : (
+            knowledge.slice(0, 5).map((item) => (
+              <div key={item.id} className="memory-item">
+                <p>{item.title}</p>
+                <span>{item.source}</span>
+              </div>
+            ))
+          )}
         </div>
       </section>
 
@@ -598,7 +767,10 @@ export default function App() {
             </div>
           </div>
 
-          {(mission.planner || mission.knowledge || mission.emergency || mission.memory) && (
+          {(mission.planner ||
+            mission.knowledge ||
+            mission.emergency ||
+            mission.memory) && (
             <div className="agent-grid">
               {mission.planner && (
                 <AgentCard
@@ -637,5 +809,5 @@ export default function App() {
       )}
     </section>
   </main>
-  );
+);
 }
