@@ -7,7 +7,7 @@ def save_knowledge(title: str, content: str, source: str = "manual", user_id: in
     embedding = create_embedding(content)
 
     db = SessionLocal()
-    item = KnowledgeItem(user_id=user_id, title=title, content=content, source=source, embedding=json.dumps(embedding))
+    item = KnowledgeItem(user_id=user_id, title=title, content=content, source=source, embedding=json.dumps(embedding) if embedding else None)
     db.add(item)
     db.commit()
     db.refresh(item)
@@ -29,6 +29,10 @@ def search_knowledge(query: str, limit: int = 5, user_id: int = None):
         return []
 
     query_embedding = create_embedding(query)
+
+    if query_embedding is None:
+        db.close()
+        return items[:limit]
 
     scored = []
 
