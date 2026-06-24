@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { ArrowLeft, Save } from "lucide-react";
 import AvatarPicker from "../components/AvatarPicker";
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 export default function SettingsPage({ user, onBack, onUserUpdated }) {
   const [form, setForm] = useState({
