@@ -1,17 +1,23 @@
 # Python
-venv/
+backend/venv/
 __pycache__/
 *.pyc
 
-# Environment variables
+# Environment
 .env
+backend/.env
+frontend/.env
+frontend/.env.production
 
-# VS Code
-.vscode/
+# Database
+*.db
+pocketpilot.db
 
 # Node
-node_modules/
+frontend/node_modules/
+frontend/dist/
 
-# Build folders
-dist/
-build/
+# IDE / OS
+.vscode/
+.DS_Store
+Thumbs.db
