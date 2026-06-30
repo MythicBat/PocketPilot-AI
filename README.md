@@ -319,7 +319,7 @@ Combines agent outputs and chooses the best reasoning backend:
 ### 1. Clone the repo
 
 ```bash
-git clone YOUR_REPO_URL
+git clone https://github.com/MythicBat/PocketPilot-AI.git
 cd PocketPilot-AI
 ```
 
