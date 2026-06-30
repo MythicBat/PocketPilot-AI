@@ -317,10 +317,13 @@ export default function App() {
     let isMounted = true;
 
     const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
 
-    if (token) {
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    if (!token || !storedUser) {
+      return;
     }
+
+    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
     const initialize = async () => {
       try {
@@ -339,6 +342,11 @@ export default function App() {
         }
       } catch (error) {
         console.error("Could not load initial data", error);
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        delete axios.defaults.headers.common["Authorization"];
+        setCurrentUser(null);
       }
     };
 
